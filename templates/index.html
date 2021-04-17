@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+<title>liveedit</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<script type="text/javascript">
+
+var DEBOUNCE_MS = 1000;
+
+function ajax(method, url, callback, data) {
+  var req = new XMLHttpRequest();
+  req.open(method, url, true);
+  req.onreadystatechange = function() {
+    if (req.readyState == 4 && req.status == 200) {
+      callback(req.responseText);
+    }
+  };
+  req.send(data);
+}
+
+function setup(b, name, local) {
+  var lastChange = 0;
+  var encodedName = encodeURIComponent(name);
+
+  var fetch = function() {
+    ajax("GET", "data/" + encodedName + "?__ts=" + new Date().getTime(), function(data) {
+      b.value = atob(data);
+    });
+  };
+
+  var post = function(now) {
+    if (now == null) now = new Date().getTime();
+    lastChange = now;
+
+    ajax("PUT", "data/" + encodedName + "?__ts=" + new Date().getTime(), function(data) {
+//      console.log("OK");
+    }, btoa(b.value));
+  };
+
+  var change = function() {
+    var now = new Date().getTime();
+    delta = now - lastChange;
+    if (delta > DEBOUNCE_MS) {
+      post(now);
+    } else {
+      window.setTimeout(post, DEBOUNCE_MS);
+    }
+  };
+
+  if (local) {
+    b.onchange = change;
+    b.onkeyup = change;
+    fetch();
+  } else {
+    window.setInterval(fetch, 500);
+  }
+}
+
+window.onload = function() {
+  var local, remote;
+
+  var h = window.location.search;
+  if (h) {
+    var t = h.substring(1).split(",")
+    local = t[0];
+    remote = t[1];
+  } else {
+    local = "b1";
+    remote = "b2";
+  }
+
+  setup(document.getElementById("local"), local, true);
+  setup(document.getElementById("remote"), remote, false);
+};
+
+</script>
+</head>
+<body>
+
+<div>Local:</div>
+<textarea id="local" rows="25" cols="150">
+</textarea>
+
+<div>Remote:</div>
+<textarea id="remote" rows="25" cols="150" readonly>
+</textarea>
+
+</body></html>

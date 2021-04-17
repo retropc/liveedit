@@ -1,0 +1,16 @@
+[Unit]
+Description=liveedit
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/path/to/liveedit
+ExecStart=/path/to/liveedit/run.sh
+User=UID
+Group=GID
+Restart=always
+RestartSec=30s
+TimeoutStopSec=2s
+
+[Install]
+WantedBy=multi-user.target
